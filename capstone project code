@@ -1,0 +1,102 @@
+# ================================
+# 📌 INSTALL & IMPORTS
+# ================================
+!pip install nltk
+import random
+import nltk
+from nltk import CFG
+from nltk.parse.generate import generate
+
+# Download once for NLTK
+nltk.download('punkt')
+
+# ================================
+# 📌 CFG DEFINITION
+# ================================
+
+# Define a simple CFG to generate question structures
+question_grammar = CFG.fromstring("""
+Q -> WH AUX NP VP
+WH -> 'What' | 'Why' | 'How'
+AUX -> 'is' | 'does' | 'can'
+NP -> 'this_topic'
+VP -> 'help us' | 'apply here' | 'work'
+""")
+
+# ================================
+# 📌 TOPIC & TEMPLATE SLOT FILLING
+# ================================
+
+# System stores some known topics & sample answers
+knowledge_base = {
+    "Newton's Second Law": ["force equals mass times acceleration", "f=ma"],
+    "Photosynthesis": ["plants make food", "convert sunlight", "chlorophyll"],
+    "SQL Joins": ["combine tables", "inner join", "outer join"],
+}
+
+# Difficulty levels: adjust by choosing more/less complex templates
+templates_by_difficulty = {
+    1: ["What is {topic}?", "Why is {topic} important?"],
+    2: ["How does {topic} apply in real life?", "Why does {topic} matter in practice?"],
+    3: ["Can you explain how {topic} influences complex systems?", "Why is understanding {topic} critical for advanced problems?"]
+}
+
+difficulty = 1  # start at level 1
+
+# ================================
+# 📌 MAIN LOOP
+# ================================
+
+while True:
+    # ----------------------
+    # USER INPUT: Topic
+    # ----------------------
+    topic = input("\n📚 Enter a topic to learn (e.g., Newton's Second Law, Photosynthesis, SQL Joins) or type 'exit' to stop:\n➡️ ")
+    if topic.lower() == 'exit':
+        print("👋 Goodbye!")
+        break
+    
+    # ----------------------
+    # GENERATE QUESTION
+    # ----------------------
+    # Use CFG or template
+    use_cfg = random.choice([True, False])
+    if use_cfg:
+        # Generate using CFG structure, then replace NP
+        sentences = list(generate(question_grammar, n=5))
+        question_structure = random.choice(sentences)
+        question = ' '.join(question_structure).replace('this_topic', topic) + '?'
+    else:
+        # Use slot-filling template by difficulty
+        templates = templates_by_difficulty[difficulty]
+        template = random.choice(templates)
+        question = template.format(topic=topic)
+    
+    print(f"\n🤖 Tutor: {question}")
+
+    # ----------------------
+    # USER ANSWER
+    # ----------------------
+    user_answer = input("✍️ Your answer:\n➡️ ")
+
+    # ----------------------
+    # SIMPLE CHECKING
+    # ----------------------
+    correct = False
+    expected_keywords = knowledge_base.get(topic, [])
+    for keyword in expected_keywords:
+        if keyword.lower() in user_answer.lower():
+            correct = True
+            break
+    
+    # ----------------------
+    # FEEDBACK & ADAPT
+    # ----------------------
+    if correct:
+        print("✅ Correct! Great job.")
+        difficulty = min(3, difficulty + 1)
+    else:
+        print("❌ Not quite right. Let's try something easier.")
+        difficulty = max(1, difficulty - 1)
+
+    print(f"🌟 Current Difficulty Level: {difficulty}")
